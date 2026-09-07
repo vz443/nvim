@@ -1,8 +1,20 @@
 {
   "plugins": {
+    "mini.nvim": {
+      "rev": "ee23d71c02440668cbca5b0cd8640d79d5bc250b",
+      "src": "https://github.com/nvim-mini/mini.nvim"
+    },
     "nvim-lspconfig": {
       "rev": "84252f9832fb5b9024fe9f7258e7c2aff915e6fb",
       "src": "https://github.com/neovim/nvim-lspconfig"
+    },
+    "nvim-treesitter": {
+      "rev": "32dbd2e8fd6079ae4d69e7ed621320369b75b563",
+      "src": "https://github.com/nvim-treesitter/nvim-treesitter"
+    },
+    "render-markdown.nvim": {
+      "rev": "4663eb3ecd538bd5062628fb6d95bbe6bdca78f6",
+      "src": "https://github.com/MeanderingProgrammer/render-markdown.nvim"
     }
   }
 }
