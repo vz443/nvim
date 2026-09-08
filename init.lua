@@ -33,3 +33,16 @@ vim.pack.add({
     -- 'https://github.com/nvim-tree/nvim-web-devicons', -- if you prefer nvim-web-devicons
     'https://github.com/MeanderingProgrammer/render-markdown.nvim',
 })
+
+-- autoclose
+vim.pack.add({
+	{	src = 'https://github.com/windwp/nvim-autopairs'	},
+	})
+
+require('nvim-autopairs').setup({})
+
+
+-- keymaps
+vim.g.mapleader = " " 
+vim.keymap.set('n', '<leader>e', vim.cmd.Ex, { desc = 'Open netrw explorer' })
+
