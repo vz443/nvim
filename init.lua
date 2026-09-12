@@ -194,6 +194,31 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Diagnostics: previ
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Diagnostics: next' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Diagnostics: location list' })
 
+local pane_directions = {
+  h = 'left',
+  j = 'below',
+  k = 'above',
+  l = 'right',
+}
+
+for key, direction in pairs(pane_directions) do
+  local description = 'Pane: focus ' .. direction
+  vim.keymap.set('n', '<C-' .. key .. '>', '<C-w>' .. key, { desc = description })
+  vim.keymap.set('t', '<C-' .. key .. '>', '<C-\\><C-N><C-W>' .. key, { desc = description })
+end
+
+local pane_resize_mappings = {
+  ['<C-Up>'] = { command = '<cmd>resize +2<cr>', description = 'Pane: increase height' },
+  ['<C-Down>'] = { command = '<cmd>resize -2<cr>', description = 'Pane: decrease height' },
+  ['<C-Left>'] = { command = '<cmd>vertical resize -2<cr>', description = 'Pane: decrease width' },
+  ['<C-Right>'] = { command = '<cmd>vertical resize +2<cr>', description = 'Pane: increase width' },
+}
+
+for key, mapping in pairs(pane_resize_mappings) do
+  vim.keymap.set('n', key, mapping.command, { desc = mapping.description })
+  vim.keymap.set('t', key, '<C-\\><C-N>' .. mapping.command, { desc = mapping.description })
+end
+
 local dap_ok, dap = pcall(require, 'dap')
 if dap_ok then
   vim.keymap.set('n', '<F5>', dap.continue, { desc = 'Debug: continue' })
