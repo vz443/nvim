@@ -36,6 +36,7 @@ vim.pack.add({
   'https://github.com/nvim-lua/plenary.nvim',
   'https://github.com/windwp/nvim-autopairs',
   'https://github.com/mfussenegger/nvim-dap',
+  'https://github.com/blazkowolf/gruber-darker.nvim',
 })
 
 vim.diagnostic.config({
@@ -207,6 +208,17 @@ for key, direction in pairs(pane_directions) do
   vim.keymap.set('t', '<C-' .. key .. '>', '<C-\\><C-N><C-W>' .. key, { desc = description })
 end
 
+local shifted_pane_directions = {
+  H = 'h',
+  L = 'l',
+}
+
+for key, direction in pairs(shifted_pane_directions) do
+  local description = 'Pane: focus ' .. (direction == 'h' and 'left' or 'right')
+  vim.keymap.set('n', key, '<C-w>' .. direction, { desc = description })
+  vim.keymap.set('t', key, '<C-\\><C-N><C-W>' .. direction, { desc = description })
+end
+
 local pane_resize_mappings = {
   ['<C-Up>'] = { command = '<cmd>resize +2<cr>', description = 'Pane: increase height' },
   ['<C-Down>'] = { command = '<cmd>resize -2<cr>', description = 'Pane: decrease height' },
@@ -270,3 +282,4 @@ if dap_ok then
     end
   end
 end
+vim.cmd.colorscheme("gruber-darker")

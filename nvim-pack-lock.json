@@ -1,5 +1,9 @@
 {
   "plugins": {
+    "gruber-darker.nvim": {
+      "rev": "50fa4e583099729fcaaadc73a5afb74f7a91a625",
+      "src": "https://github.com/blazkowolf/gruber-darker.nvim"
+    },
     "mini.nvim": {
       "rev": "ee23d71c02440668cbca5b0cd8640d79d5bc250b",
       "src": "https://github.com/nvim-mini/mini.nvim"
