@@ -68,11 +68,6 @@ function M.setup(telescope_builtin, dap)
     l = 'right',
   }
 
-  for key, direction in pairs(pane_directions) do
-    local description = 'Pane: focus ' .. direction
-    set('n', '<C-' .. key .. '>', '<C-w>' .. key, description)
-    set('t', '<C-' .. key .. '>', '<C-\\><C-N><C-W>' .. key, description)
-  end
 
   local shifted_pane_directions = {
     H = 'h',
