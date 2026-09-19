@@ -18,9 +18,9 @@ vim.opt.scrolloff = 8
 vim.opt.sidescrolloff = 8
 vim.opt.undofile = true
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 4
-vim.opt.softtabstop = 4
-vim.opt.tabstop = 4
+vim.opt.shiftwidth = 8
+vim.opt.softtabstop = 8
+vim.opt.tabstop = 8
 vim.opt.completeopt = { 'menu', 'menuone', 'noselect', 'popup' }
 vim.opt.clipboard = vim.fn.has('unnamedplus') == 1 and 'unnamed,unnamedplus' or 'unnamed'
 
@@ -76,6 +76,7 @@ vim.lsp.config('rust_analyzer', {
 
 local editor_group = vim.api.nvim_create_augroup('user-editor', { clear = true })
 local lsp_group = vim.api.nvim_create_augroup('user-lsp', { clear = true })
+local keymaps = require('keymaps')
 
 require('nvim-treesitter').setup({})
 
@@ -84,9 +85,9 @@ vim.api.nvim_create_autocmd('FileType', {
   pattern = { 'c', 'cpp', 'rust' },
   callback = function(event)
     vim.opt_local.expandtab = true
-    vim.opt_local.shiftwidth = 4
-    vim.opt_local.softtabstop = 4
-    vim.opt_local.tabstop = 4
+    vim.opt_local.shiftwidth = 8
+    vim.opt_local.softtabstop = 8
+    vim.opt_local.tabstop = 8
 
     local started = pcall(vim.treesitter.start, event.buf)
     if not started then
@@ -98,51 +99,7 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd('LspAttach', {
   group = lsp_group,
   callback = function(event)
-    local client = vim.lsp.get_client_by_id(event.data.client_id)
-    if not client then
-      return
-    end
-
-    local function map(mode, lhs, rhs, desc)
-      vim.keymap.set(mode, lhs, rhs, {
-        buffer = event.buf,
-        silent = true,
-        desc = desc,
-      })
-    end
-
-    map('n', 'gd', vim.lsp.buf.definition, 'LSP: go to definition')
-    map('n', 'gD', vim.lsp.buf.declaration, 'LSP: go to declaration')
-    map('n', 'gi', vim.lsp.buf.implementation, 'LSP: go to implementation')
-    map('n', 'gr', vim.lsp.buf.references, 'LSP: find references')
-    map('n', 'K', vim.lsp.buf.hover, 'LSP: hover documentation')
-    map('n', '<leader>rn', vim.lsp.buf.rename, 'LSP: rename symbol')
-    map('n', '<leader>ca', vim.lsp.buf.code_action, 'LSP: code action')
-    map('n', '<leader>cd', vim.diagnostic.open_float, 'Diagnostics: open float')
-
-    if client.name == 'clangd' then
-      map('n', '<leader>ch', '<cmd>LspClangdSwitchSourceHeader<cr>', 'Clangd: switch source/header')
-    end
-
-    if client:supports_method('textDocument/completion') then
-      vim.lsp.completion.enable(true, client.id, event.buf, { autotrigger = true })
-      map('i', '<C-Space>', function()
-        vim.lsp.completion.get()
-      end, 'LSP: trigger completion')
-    end
-
-    if client:supports_method('textDocument/formatting') then
-      map('n', '<leader>cf', function()
-        vim.lsp.buf.format({ async = true, bufnr = event.buf })
-      end, 'LSP: format buffer')
-    end
-
-    if client:supports_method('textDocument/inlayHint') then
-      map('n', '<leader>uh', function()
-        local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
-        vim.lsp.inlay_hint.enable(not enabled, { bufnr = event.buf })
-      end, 'LSP: toggle inlay hints')
-    end
+    keymaps.setup_lsp(event)
   end,
 })
 
@@ -184,67 +141,9 @@ local telescope = require('telescope')
 telescope.setup({})
 
 local telescope_builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>e', '<cmd>Ex<cr>', { desc = 'Open netrw explorer' })
-vim.keymap.set('n', '<leader>t', telescope_builtin.find_files, { desc = 'Telescope: find files' })
-vim.keymap.set('n', '<leader>ff', telescope_builtin.find_files, { desc = 'Telescope: find files' })
-vim.keymap.set('n', '<leader>fg', telescope_builtin.live_grep, { desc = 'Telescope: live grep' })
-vim.keymap.set('n', '<leader>fb', telescope_builtin.buffers, { desc = 'Telescope: buffers' })
-vim.keymap.set('n', '<leader>fd', telescope_builtin.diagnostics, { desc = 'Telescope: diagnostics' })
-
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Diagnostics: previous' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Diagnostics: next' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Diagnostics: location list' })
-
-local pane_directions = {
-  h = 'left',
-  j = 'below',
-  k = 'above',
-  l = 'right',
-}
-
-for key, direction in pairs(pane_directions) do
-  local description = 'Pane: focus ' .. direction
-  vim.keymap.set('n', '<C-' .. key .. '>', '<C-w>' .. key, { desc = description })
-  vim.keymap.set('t', '<C-' .. key .. '>', '<C-\\><C-N><C-W>' .. key, { desc = description })
-end
-
-local shifted_pane_directions = {
-  H = 'h',
-  L = 'l',
-}
-
-for key, direction in pairs(shifted_pane_directions) do
-  local description = 'Pane: focus ' .. (direction == 'h' and 'left' or 'right')
-  vim.keymap.set('n', key, '<C-w>' .. direction, { desc = description })
-  vim.keymap.set('t', key, '<C-\\><C-N><C-W>' .. direction, { desc = description })
-end
-
-local pane_resize_mappings = {
-  ['<C-Up>'] = { command = '<cmd>resize +2<cr>', description = 'Pane: increase height' },
-  ['<C-Down>'] = { command = '<cmd>resize -2<cr>', description = 'Pane: decrease height' },
-  ['<C-Left>'] = { command = '<cmd>vertical resize -2<cr>', description = 'Pane: decrease width' },
-  ['<C-Right>'] = { command = '<cmd>vertical resize +2<cr>', description = 'Pane: increase width' },
-}
-
-for key, mapping in pairs(pane_resize_mappings) do
-  vim.keymap.set('n', key, mapping.command, { desc = mapping.description })
-  vim.keymap.set('t', key, '<C-\\><C-N>' .. mapping.command, { desc = mapping.description })
-end
-
 local dap_ok, dap = pcall(require, 'dap')
+keymaps.setup(telescope_builtin, dap_ok and dap or nil)
 if dap_ok then
-  vim.keymap.set('n', '<F5>', dap.continue, { desc = 'Debug: continue' })
-  vim.keymap.set('n', '<F10>', dap.step_over, { desc = 'Debug: step over' })
-  vim.keymap.set('n', '<F11>', dap.step_into, { desc = 'Debug: step into' })
-  vim.keymap.set('n', '<F12>', dap.step_out, { desc = 'Debug: step out' })
-  vim.keymap.set({ 'n', 'v' }, '<leader>db', dap.toggle_breakpoint, { desc = 'Debug: toggle breakpoint' })
-  vim.keymap.set('n', '<leader>dB', function()
-    dap.set_breakpoint(vim.fn.input('Breakpoint condition: '))
-  end, { desc = 'Debug: conditional breakpoint' })
-  vim.keymap.set('n', '<leader>dc', dap.continue, { desc = 'Debug: continue' })
-  vim.keymap.set('n', '<leader>dr', dap.repl.open, { desc = 'Debug: open REPL' })
-  vim.keymap.set('n', '<leader>dx', dap.terminate, { desc = 'Debug: terminate' })
-
   local debugger = vim.fn.exepath('codelldb')
   local adapter_name = 'codelldb'
 
