@@ -37,6 +37,7 @@ vim.pack.add({
   'https://github.com/windwp/nvim-autopairs',
   'https://github.com/mfussenegger/nvim-dap',
   'https://github.com/blazkowolf/gruber-darker.nvim',
+  'https://github.com/mikavilpas/yazi.nvim',
 })
 
 vim.diagnostic.config({
@@ -46,6 +47,15 @@ vim.diagnostic.config({
   update_in_insert = false,
   severity_sort = true,
   float = { border = 'rounded', source = 'if_many' },
+})
+
+local c_style = require('c_style')
+
+local completion = require('mini.completion')
+completion.setup({})
+
+vim.lsp.config('*', {
+  capabilities = completion.get_lsp_capabilities(),
 })
 
 vim.lsp.config('clangd', {
@@ -76,18 +86,32 @@ vim.lsp.config('rust_analyzer', {
 
 local editor_group = vim.api.nvim_create_augroup('user-editor', { clear = true })
 local lsp_group = vim.api.nvim_create_augroup('user-lsp', { clear = true })
+local formatting = require('formatting')
 local keymaps = require('keymaps')
 
 require('nvim-treesitter').setup({})
 
 vim.api.nvim_create_autocmd('FileType', {
   group = editor_group,
-  pattern = { 'c', 'cpp', 'rust' },
+  pattern = { 'c', 'cpp' },
+  callback = function(event)
+    c_style.apply_editor_options()
+
+    local started = pcall(vim.treesitter.start, event.buf)
+    if not started then
+      vim.bo[event.buf].syntax = vim.bo[event.buf].filetype
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = editor_group,
+  pattern = 'rust',
   callback = function(event)
     vim.opt_local.expandtab = true
-    vim.opt_local.shiftwidth = 8
-    vim.opt_local.softtabstop = 8
-    vim.opt_local.tabstop = 8
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.softtabstop = 4
+    vim.opt_local.tabstop = 4
 
     local started = pcall(vim.treesitter.start, event.buf)
     if not started then
@@ -99,36 +123,15 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd('LspAttach', {
   group = lsp_group,
   callback = function(event)
-    keymaps.setup_lsp(event)
+    keymaps.setup_lsp(event, formatting)
   end,
 })
-
-local formatter_names = {
-  clangd = true,
-  rust_analyzer = true,
-}
 
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = lsp_group,
   callback = function(event)
-    local has_formatter = false
-
-    for _, client in ipairs(vim.lsp.get_clients({ bufnr = event.buf })) do
-      if formatter_names[client.name] and client:supports_method('textDocument/formatting') then
-        has_formatter = true
-        break
-      end
-    end
-
-    if has_formatter then
-      vim.lsp.buf.format({
-        bufnr = event.buf,
-        async = false,
-        timeout_ms = 2000,
-        filter = function(client)
-          return formatter_names[client.name] and client:supports_method('textDocument/formatting')
-        end,
-      })
+    if formatting.available(event.buf) then
+      formatting.format(event.buf)
     end
   end,
 })

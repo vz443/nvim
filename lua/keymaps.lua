@@ -5,7 +5,7 @@ local function set(mode, lhs, rhs, desc, opts)
   vim.keymap.set(mode, lhs, rhs, opts)
 end
 
-function M.setup_lsp(event)
+function M.setup_lsp(event, formatting)
   local client = vim.lsp.get_client_by_id(event.data.client_id)
   if not client then
     return
@@ -31,14 +31,9 @@ function M.setup_lsp(event)
     set_buffer('n', '<leader>ch', '<cmd>LspClangdSwitchSourceHeader<cr>', 'Clangd: switch source/header')
   end
 
-  if client:supports_method('textDocument/completion') then
-    vim.lsp.completion.enable(true, client.id, event.buf, { autotrigger = true })
-    set_buffer('i', '<C-Space>', vim.lsp.completion.get, 'LSP: trigger completion')
-  end
-
-  if client:supports_method('textDocument/formatting') then
+  if formatting.supports(client, event.buf) then
     set_buffer('n', '<leader>cf', function()
-      vim.lsp.buf.format({ async = true, bufnr = event.buf })
+      formatting.format(event.buf)
     end, 'LSP: format buffer')
   end
 
@@ -51,6 +46,16 @@ function M.setup_lsp(event)
 end
 
 function M.setup(telescope_builtin, dap)
+  set({ 'i', 's' }, '<Tab>', function()
+    if vim.fn.pumvisible() == 1 then
+      return vim.fn.complete_info({ 'selected' }).selected == -1 and '<C-n><C-y>' or '<C-y>'
+    end
+    if vim.snippet.active({ direction = 1 }) then
+      return '<Cmd>lua vim.snippet.jump(1)<CR>'
+    end
+    return '<Tab>'
+  end, 'Completion: accept or jump to next snippet argument', { expr = true })
+
   set('n', '<leader>e', '<cmd>Ex<cr>', 'Open netrw explorer')
   set('n', '<leader>ff', telescope_builtin.find_files, 'Telescope: find files')
   set('n', '<leader>fg', telescope_builtin.live_grep, 'Telescope: live grep')
@@ -81,10 +86,10 @@ function M.setup(telescope_builtin, dap)
   end
 
   local pane_resize_mappings = {
-    ['<C-Up>'] = { command = '<cmd>resize +2<cr>', description = 'Pane: increase height' },
-    ['<C-Down>'] = { command = '<cmd>resize -2<cr>', description = 'Pane: decrease height' },
-    ['<C-Left>'] = { command = '<cmd>vertical resize -2<cr>', description = 'Pane: decrease width' },
-    ['<C-Right>'] = { command = '<cmd>vertical resize +2<cr>', description = 'Pane: increase width' },
+    ['<C-k>'] = { command = '<cmd>resize +2<cr>', description = 'Pane: increase height' },
+    ['<C-j>'] = { command = '<cmd>resize -2<cr>', description = 'Pane: decrease height' },
+    ['<C-h>'] = { command = '<cmd>vertical resize -2<cr>', description = 'Pane: decrease width' },
+    ['<C-l>'] = { command = '<cmd>vertical resize +2<cr>', description = 'Pane: increase width' },
   }
 
   for key, mapping in pairs(pane_resize_mappings) do
